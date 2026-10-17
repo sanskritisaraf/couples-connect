@@ -12,5 +12,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
-  return NextResponse.redirect(`${origin}/login?error=link`);
+  // The email is already confirmed by Supabase before it redirects here. If the link was opened
+  // on a different device or browser, the session can't be created, so just ask them to sign in.
+  return NextResponse.redirect(`${origin}/login?confirmed=1&next=${encodeURIComponent(next)}`);
 }

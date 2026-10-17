@@ -15,7 +15,9 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(
     params.get("error") === "link" ? "That link has expired or was already used. Try signing in." : null,
   );
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(
+    params.get("confirmed") ? "Your email is confirmed. Sign in to continue." : null,
+  );
   const rawNext = params.get("next") || (params.get("join") ? "/onboarding?join=1" : "/discover");
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/discover";
 
