@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireCouple } from "@/lib/session";
-import type { DiscoverCouple } from "@/lib/types";
+import type { DiscoverCouple, Member } from "@/lib/types";
 import { DiscoverDeck } from "./DiscoverDeck";
 
 export default async function DiscoverPage() {
@@ -31,6 +31,16 @@ export default async function DiscoverPage() {
       .eq("proposed_by", user.id),
   ]);
 
+  const list = (couples ?? []) as DiscoverCouple[];
+  const { data: people } = list.length
+    ? await supabase
+        .from("profiles")
+        .select("id, display_name, couple_id, birth_year")
+        .in("couple_id", list.map((c) => c.id))
+    : { data: [] as Member[] };
+  const membersByCouple: Record<string, Member[]> = {};
+  for (const m of (people ?? []) as Member[]) (membersByCouple[m.couple_id!] ??= []).push(m);
+
   const partner = members.find((m) => m.id !== user.id)?.display_name ?? "your partner";
   const waiting = (myPending ?? []).map((l) => {
     const rel = l.couples as unknown as { name: string } | { name: string }[] | null;
@@ -48,7 +58,7 @@ export default async function DiscoverPage() {
       {error ? (
         <p className="card text-sm text-clay-dark">Couldn&apos;t load couples: {error.message}</p>
       ) : (
-        <DiscoverDeck initial={(couples ?? []) as DiscoverCouple[]} partnerName={partner} />
+        <DiscoverDeck initial={list} members={membersByCouple} partnerName={partner} />
       )}
       {waiting.length > 0 && (
         <div className="card">

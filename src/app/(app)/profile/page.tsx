@@ -1,6 +1,7 @@
 import { requireCouple } from "@/lib/session";
 import { ProfileForm } from "./ProfileForm";
 import { CopyCode } from "@/components/CopyCode";
+import { memberLine } from "@/lib/constants";
 
 export default async function ProfilePage() {
   const { supabase, couple, members, user } = await requireCouple();
@@ -15,7 +16,7 @@ export default async function ProfilePage() {
       <div>
         <h1 className="font-display text-4xl font-semibold">Our profile</h1>
         <p className="mt-1 text-muted">
-          {members.map((m) => m.display_name).join(" & ")}
+          {memberLine(members)}
           {couple.status === "pending" && " · waiting for your partner to join"}
         </p>
       </div>
@@ -25,7 +26,7 @@ export default async function ProfilePage() {
           <CopyCode code={invite.code} />
         </div>
       )}
-      <ProfileForm couple={couple} myName={me?.display_name ?? ""} userId={user.id} />
+      <ProfileForm couple={couple} myName={me?.display_name ?? ""} myBirthYear={me?.birth_year ?? null} userId={user.id} />
     </div>
   );
 }

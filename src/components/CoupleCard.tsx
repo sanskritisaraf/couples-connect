@@ -1,5 +1,5 @@
-import { DRINKS_LABEL, KIDS_LABEL, yearsTogether } from "@/lib/constants";
-import type { DiscoverCouple } from "@/lib/types";
+import { DRINKS_LABEL, KIDS_LABEL, memberLine, yearsTogether } from "@/lib/constants";
+import type { DiscoverCouple, Member } from "@/lib/types";
 
 function Tags({ title, all, shared }: { title: string; all: string[]; shared: string[] }) {
   if (!all.length) return null;
@@ -18,7 +18,7 @@ function Tags({ title, all, shared }: { title: string; all: string[]; shared: st
   );
 }
 
-export function CoupleCard({ c }: { c: DiscoverCouple }) {
+export function CoupleCard({ c, members = [] }: { c: DiscoverCouple; members?: Member[] }) {
   const facts = [
     yearsTogether(c.together_since),
     c.drinks ? DRINKS_LABEL[c.drinks] : null,
@@ -46,6 +46,7 @@ export function CoupleCard({ c }: { c: DiscoverCouple }) {
       <div className="space-y-4 p-6">
         <div>
           <h2 className="font-display text-3xl font-semibold">{c.name}</h2>
+          {members.length > 0 && <p className="mt-0.5 font-semibold">{memberLine(members)}</p>}
           <p className="text-sm text-muted">
             {[c.neighbourhood, c.city].filter(Boolean).join(", ")}
             {facts.length > 0 && " · " + facts.join(" · ")}

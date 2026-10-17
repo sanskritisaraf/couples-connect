@@ -43,3 +43,17 @@ In Supabase → Authentication → URL Configuration, set **Site URL** to your V
 
 ## Database changes
 Schema lives in `supabase/migrations/`. Apply new files in order through the Supabase SQL Editor or `supabase db push`.
+
+## Demo couples
+`supabase/seed/demo_couples.sql` adds four demo couples in Delhi (8 logins, ages 25–35), with a match, a chat,
+a like waiting for a partner's approval, and a couple who has already liked you.
+All demo logins use the password `CouplesDemo@2026`:
+
+| Couple | Logins |
+| --- | --- |
+| Arjun & Kabir (Hauz Khas) | `arjun.demo@example.com`, `kabir.demo@example.com` |
+| Ananya & Riya (Saket) | `ananya.demo@example.com`, `riya.demo@example.com` |
+| Priya & Rahul (Vasant Kunj) | `priya.demo@example.com`, `rahul.demo@example.com` |
+| Meera & Siddharth (Lajpat Nagar) | `meera.demo@example.com`, `siddharth.demo@example.com` |
+
+Remove them before launch with `supabase/seed/remove_demo_couples.sql`.

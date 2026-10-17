@@ -11,7 +11,7 @@ export async function getSession() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, couple_id")
+    .select("id, display_name, couple_id, birth_year")
     .eq("id", user.id)
     .single<Profile>();
 
@@ -20,7 +20,7 @@ export async function getSession() {
   if (profile?.couple_id) {
     const [{ data: c }, { data: m }] = await Promise.all([
       supabase.from("couples").select("*").eq("id", profile.couple_id).single<Couple>(),
-      supabase.from("profiles").select("id, display_name, couple_id").eq("couple_id", profile.couple_id),
+      supabase.from("profiles").select("id, display_name, couple_id, birth_year").eq("couple_id", profile.couple_id),
     ]);
     couple = c;
     members = (m as Profile[]) ?? [];

@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { CITIES, INTERESTS, INTEREST_KEYS, type InterestKey } from "@/lib/constants";
 import type { Couple } from "@/lib/types";
 
-export function ProfileForm({ couple, myName, userId }: { couple: Couple; myName: string; userId: string }) {
+export function ProfileForm({
+  couple, myName, myBirthYear, userId,
+}: { couple: Couple; myName: string; myBirthYear: number | null; userId: string }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: couple.name,
@@ -22,6 +24,8 @@ export function ProfileForm({ couple, myName, userId }: { couple: Couple; myName
     cuisines: couple.cuisines, music: couple.music, movies: couple.movies, activities: couple.activities,
   });
   const [name, setName] = useState(myName);
+  const [birthYear, setBirthYear] = useState(myBirthYear ? String(myBirthYear) : "");
+  const thisYear = new Date().getFullYear();
   const [photoUrl, setPhotoUrl] = useState(couple.photo_url);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -77,7 +81,10 @@ export function ProfileForm({ couple, myName, userId }: { couple: Couple; myName
           ...tags,
         })
         .eq("id", couple.id),
-      supabase.from("profiles").update({ display_name: name.trim() }).eq("id", userId),
+      supabase
+        .from("profiles")
+        .update({ display_name: name.trim(), birth_year: birthYear ? Number(birthYear) : null })
+        .eq("id", userId),
     ]);
     setBusy(false);
     const err = error ?? e2;
@@ -114,6 +121,12 @@ export function ProfileForm({ couple, myName, userId }: { couple: Couple; myName
         <div>
           <label className="label" htmlFor="myname">Your first name</label>
           <input id="myname" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div>
+          <label className="label" htmlFor="by">Your birth year</label>
+          <input id="by" type="number" inputMode="numeric" className="field" min={thisYear - 80} max={thisYear - 18}
+            placeholder="e.g. 1997" value={birthYear} onChange={(e) => setBirthYear(e.target.value)} />
+          <p className="mt-1 text-xs text-muted">Only your age is shown, e.g. &ldquo;{name || "You"}, 29&rdquo;.</p>
         </div>
         <div>
           <label className="label" htmlFor="city">City</label>

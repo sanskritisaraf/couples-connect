@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { CoupleCard } from "@/components/CoupleCard";
-import type { DiscoverCouple } from "@/lib/types";
+import type { DiscoverCouple, Member } from "@/lib/types";
 
 type Toast = { tone: "ok" | "match" | "err"; text: string; matchName?: string };
 
-export function DiscoverDeck({ initial, partnerName }: { initial: DiscoverCouple[]; partnerName: string }) {
+export function DiscoverDeck({
+  initial, members, partnerName,
+}: { initial: DiscoverCouple[]; members: Record<string, Member[]>; partnerName: string }) {
   const [queue, setQueue] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -52,7 +54,7 @@ export function DiscoverDeck({ initial, partnerName }: { initial: DiscoverCouple
               <b>{partnerName}</b> liked this couple. Like them too to send it.
             </p>
           )}
-          <CoupleCard c={current} />
+          <CoupleCard c={current} members={members[current.id] ?? []} />
           <div className="sticky bottom-20 z-10 flex justify-center gap-4 md:bottom-4">
             <button onClick={() => act("pass")} disabled={busy} className="btn-ghost h-14 w-36 text-base shadow-lg">
               Not for us

@@ -21,7 +21,10 @@ export type Profile = {
   id: string;
   display_name: string | null;
   couple_id: string | null;
+  birth_year: number | null;
 };
+
+export type Member = Pick<Profile, "id" | "display_name" | "couple_id" | "birth_year">;
 
 export type DiscoverCouple = Pick<
   Couple,

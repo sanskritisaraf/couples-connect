@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCouple } from "@/lib/session";
-import { INTEREST_KEYS } from "@/lib/constants";
+import { INTEREST_KEYS, memberLine } from "@/lib/constants";
 import type { Couple, Message, Profile } from "@/lib/types";
 import { Chat } from "./Chat";
 import { ReportButton } from "./ReportButton";
@@ -16,7 +16,7 @@ export default async function MatchChatPage({ params }: { params: Promise<{ id: 
 
   const [{ data: other }, { data: people }, { data: messages }] = await Promise.all([
     supabase.from("couples").select("*").eq("id", otherId).single<Couple>(),
-    supabase.from("profiles").select("id, display_name, couple_id").in("couple_id", [couple.id, otherId]),
+    supabase.from("profiles").select("id, display_name, couple_id, birth_year").in("couple_id", [couple.id, otherId]),
     supabase.from("messages").select("*").eq("match_id", id).order("created_at").limit(500),
   ]);
   if (!other) notFound();
@@ -35,7 +35,8 @@ export default async function MatchChatPage({ params }: { params: Promise<{ id: 
           <div>
             <h1 className="font-display text-2xl font-semibold leading-tight">{other.name}</h1>
             <p className="text-xs text-muted">
-              Chat with all four of you · {[other.neighbourhood, other.city].filter(Boolean).join(", ")}
+              {memberLine(((people ?? []) as Profile[]).filter((p) => p.couple_id === other.id))} ·{" "}
+              {[other.neighbourhood, other.city].filter(Boolean).join(", ")}
             </p>
           </div>
         </div>

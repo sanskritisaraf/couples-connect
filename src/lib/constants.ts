@@ -52,6 +52,21 @@ export const KIDS_LABEL: Record<string, string> = {
   prefer_not_say: "",
 };
 
+export function ageFrom(birthYear: number | null | undefined) {
+  if (!birthYear) return null;
+  return new Date().getFullYear() - birthYear;
+}
+
+/** "Arjun, 29 & Kabir, 31" */
+export function memberLine(members: { display_name: string | null; birth_year: number | null }[]) {
+  return members
+    .map((m) => {
+      const age = ageFrom(m.birth_year);
+      return `${m.display_name ?? "Someone"}${age ? `, ${age}` : ""}`;
+    })
+    .join(" & ");
+}
+
 export function yearsTogether(since: string | null) {
   if (!since) return null;
   const ms = Date.now() - new Date(since).getTime();
