@@ -98,6 +98,12 @@ begin
 
   insert into public.couple_invites (couple_id) values (c1), (c2), (c3), (c4);
 
+  -- Illustrated portraits served by the app from /public/demo
+  update public.couples set photo_url = '/demo/arjun-kabir.webp'     where id = c1;
+  update public.couples set photo_url = '/demo/ananya-riya.webp'     where id = c2;
+  update public.couples set photo_url = '/demo/priya-rahul.webp'     where id = c3;
+  update public.couples set photo_url = '/demo/meera-siddharth.webp' where id = c4;
+
   -- 3. Activity so every feature has something to show
   -- Arjun & Kabir matched with Ananya & Riya, with a chat going
   insert into public.couple_likes (from_couple, to_couple, proposed_by, approved_by, status) values
