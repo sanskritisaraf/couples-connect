@@ -9,12 +9,19 @@ import type { DiscoverCouple, Member } from "@/lib/types";
 type Toast = { tone: "ok" | "match" | "err"; text: string; matchName?: string };
 
 export function DiscoverDeck({
-  initial, members, partnerName,
-}: { initial: DiscoverCouple[]; members: Record<string, Member[]>; partnerName: string }) {
+  initial, members, partnerName, canLike, showingCity,
+}: {
+  initial: DiscoverCouple[];
+  members: Record<string, Member[]>;
+  partnerName: string;
+  canLike: boolean;
+  showingCity: string;
+}) {
   const [queue, setQueue] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const current = queue[0];
+  const [index, setIndex] = useState(0); // used when browsing without being able to like
+  const current = canLike ? queue[0] : queue[index];
 
   async function act(kind: "like" | "pass") {
     if (!current) return;
@@ -55,22 +62,41 @@ export function DiscoverDeck({
             </p>
           )}
           <CoupleCard c={current} members={members[current.id] ?? []} />
-          <div className="sticky bottom-20 z-10 flex justify-center gap-4 md:bottom-4">
-            <button onClick={() => act("pass")} disabled={busy} className="btn-ghost h-14 w-36 text-base shadow-lg">
-              Not for us
-            </button>
-            <button onClick={() => act("like")} disabled={busy} className="btn-primary h-14 w-36 text-base shadow-lg">
-              {current.partner_proposed ? "Approve ♥" : "Like ♥"}
-            </button>
-          </div>
+          {canLike ? (
+            <div className="sticky bottom-20 z-10 flex justify-center gap-4 md:bottom-4">
+              <button onClick={() => act("pass")} disabled={busy} className="btn-ghost h-14 w-36 text-base shadow-lg">
+                Not for us
+              </button>
+              <button onClick={() => act("like")} disabled={busy} className="btn-primary h-14 w-36 text-base shadow-lg">
+                {current.partner_proposed ? "Approve ♥" : "Like ♥"}
+              </button>
+            </div>
+          ) : (
+            <div className="sticky bottom-20 z-10 flex items-center justify-center gap-3 md:bottom-4">
+              <button onClick={() => setIndex((i) => Math.max(0, i - 1))} disabled={index === 0}
+                className="btn-ghost h-12 w-28 shadow-lg">← Back</button>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-muted shadow">
+                {index + 1} / {queue.length}
+              </span>
+              <button onClick={() => setIndex((i) => Math.min(queue.length - 1, i + 1))} disabled={index >= queue.length - 1}
+                className="btn-primary h-12 w-28 shadow-lg">Next →</button>
+            </div>
+          )}
         </>
       ) : (
         <div className="card text-center">
-          <p className="font-display text-2xl font-semibold">You&apos;re all caught up</p>
-          <p className="mt-2 text-sm text-muted">
-            New couples join every week. Add more interests to your profile to get better suggestions.
+          <p className="font-display text-2xl font-semibold">
+            {initial.length === 0 && showingCity ? `No couples in ${showingCity} yet` : "You\u2019re all caught up"}
           </p>
-          <Link href="/profile" className="btn-ghost mt-5">Update interests</Link>
+          <p className="mt-2 text-sm text-muted">
+            {initial.length === 0 && showingCity
+              ? "Try another city, or check back soon. New couples join every week."
+              : "New couples join every week. Add more interests to your profile to get better suggestions."}
+          </p>
+          <div className="mt-5 flex justify-center gap-3">
+            {showingCity && <Link href="/discover?city=all" className="btn-ghost">See all cities</Link>}
+            <Link href="/profile" className="btn-ghost">Update interests</Link>
+          </div>
         </div>
       )}
     </div>

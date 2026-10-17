@@ -1,34 +1,32 @@
 import Link from "next/link";
-import { requireCouple } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { CITIES } from "@/lib/constants";
 import type { DiscoverCouple, Member } from "@/lib/types";
 import { DiscoverDeck } from "./DiscoverDeck";
+import { CityFilter } from "./CityFilter";
 
-export default async function DiscoverPage() {
-  const { supabase, couple, user, members } = await requireCouple();
+export default async function DiscoverPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ city?: string }>;
+}) {
+  const { supabase, couple, user, members } = await getSession();
+  const { city: cityParam } = await searchParams;
 
-  if (couple.status === "pending") {
-    return (
-      <Empty title="Waiting for your partner" body="You'll start seeing couples once your partner joins with your invite code.">
-        <Link href="/onboarding" className="btn-primary">See invite code</Link>
-      </Empty>
-    );
-  }
-  if (!couple.city) {
-    return (
-      <Empty title="Add your city first" body="We show you couples in the same city, so we need to know where you are.">
-        <Link href="/profile" className="btn-primary">Complete profile</Link>
-      </Empty>
-    );
-  }
+  // Default to the couple's own city; "all" (or no city yet) shows everyone.
+  const city = cityParam === "all" ? "" : cityParam ?? couple?.city ?? "";
+  const canLike = couple?.status === "active";
 
   const [{ data: couples, error }, { data: myPending }] = await Promise.all([
-    supabase.rpc("discover_couples"),
-    supabase
-      .from("couple_likes")
-      .select("id, to_couple, couples!couple_likes_to_couple_fkey(name)")
-      .eq("from_couple", couple.id)
-      .eq("status", "pending")
-      .eq("proposed_by", user.id),
+    supabase.rpc("browse_couples", { city_filter: city || null }),
+    couple
+      ? supabase
+          .from("couple_likes")
+          .select("id, to_couple, couples!couple_likes_to_couple_fkey(name)")
+          .eq("from_couple", couple.id)
+          .eq("status", "pending")
+          .eq("proposed_by", user.id)
+      : Promise.resolve({ data: [] as { couples: unknown }[] }),
   ]);
 
   const list = (couples ?? []) as DiscoverCouple[];
@@ -42,24 +40,58 @@ export default async function DiscoverPage() {
   for (const m of (people ?? []) as Member[]) (membersByCouple[m.couple_id!] ??= []).push(m);
 
   const partner = members.find((m) => m.id !== user.id)?.display_name ?? "your partner";
-  const waiting = (myPending ?? []).map((l) => {
-    const rel = l.couples as unknown as { name: string } | { name: string }[] | null;
-    return Array.isArray(rel) ? rel[0]?.name : rel?.name;
-  }).filter(Boolean) as string[];
+  const waiting = (myPending ?? [])
+    .map((l) => {
+      const rel = l.couples as { name: string } | { name: string }[] | null;
+      return Array.isArray(rel) ? rel[0]?.name : rel?.name;
+    })
+    .filter(Boolean) as string[];
+
+  const cityOptions = Array.from(new Set([...(couple?.city ? [couple.city] : []), ...CITIES]));
 
   return (
     <div className="space-y-6 py-4">
-      <div>
-        <h1 className="font-display text-4xl font-semibold">Couples in {couple.city}</h1>
-        <p className="mt-1 text-sm text-muted">
-          A like is sent only after you and {partner} both like the same couple.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-4xl font-semibold">{city ? `Couples in ${city}` : "Couples near you"}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {canLike
+              ? `A like is sent only after you and ${partner} both like the same couple.`
+              : "Have a look around. You can start liking once your couple profile is live."}
+          </p>
+        </div>
+        <CityFilter value={city} options={cityOptions} />
       </div>
+
+      {!couple && (
+        <Banner text="Set up your couple profile, or join your partner with their code, to start liking couples.">
+          <Link href="/onboarding" className="btn-primary">Set up our couple</Link>
+        </Banner>
+      )}
+      {couple?.status === "pending" && (
+        <Banner text="Your partner hasn't joined yet. Share your invite code so you can start liking couples together.">
+          <Link href="/onboarding" className="btn-primary">See invite code</Link>
+        </Banner>
+      )}
+      {couple?.status === "active" && !couple.city && (
+        <Banner text="Add your city and interests to see who you have the most in common with.">
+          <Link href="/profile" className="btn-primary">Complete profile</Link>
+        </Banner>
+      )}
+
       {error ? (
         <p className="card text-sm text-clay-dark">Couldn&apos;t load couples: {error.message}</p>
       ) : (
-        <DiscoverDeck initial={list} members={membersByCouple} partnerName={partner} />
+        <DiscoverDeck
+          key={city || "all"}
+          initial={list}
+          members={membersByCouple}
+          partnerName={partner}
+          canLike={canLike}
+          showingCity={city}
+        />
       )}
+
       {waiting.length > 0 && (
         <div className="card">
           <p className="label">Waiting for {partner} to approve</p>
@@ -70,12 +102,11 @@ export default async function DiscoverPage() {
   );
 }
 
-function Empty({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
+function Banner({ text, children }: { text: string; children: React.ReactNode }) {
   return (
-    <div className="card my-8 text-center">
-      <h1 className="font-display text-3xl font-semibold">{title}</h1>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-muted">{body}</p>
-      <div className="mt-6">{children}</div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-clay/30 bg-clay/5 px-5 py-4">
+      <p className="text-sm">{text}</p>
+      {children}
     </div>
   );
 }

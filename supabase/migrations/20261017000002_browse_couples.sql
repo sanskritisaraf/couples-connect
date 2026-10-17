@@ -1,0 +1,2 @@
+-- See applied version in Supabase: public.browse_couples(city_filter text)
+-- Lets any signed-in user browse active couples (optionally by city) before their own couple is live.

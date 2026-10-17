@@ -41,14 +41,20 @@ export function LoginForm() {
         router.push(next);
         router.refresh();
       } else {
-        setNotice(`Check ${email} for a confirmation link, then come back here.`);
+        setNotice(`Almost there! We've sent a confirmation link to ${email}. Open it on any device to finish signing up. Can't find it? Check spam or promotions.`);
       }
       return;
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) return setError(error.message);
+    if (error) {
+      return setError(
+        error.message.toLowerCase().includes("email not confirmed")
+          ? "Please confirm your email first. Open the link we sent you, then sign in."
+          : error.message,
+      );
+    }
     router.push(next);
     router.refresh();
   }
